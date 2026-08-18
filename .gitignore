@@ -1,0 +1,31 @@
+# Python (core-backend)
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+.coverage
+.coverage.*
+htmlcov/
+dist/
+build/
+
+# Node (core-frontend)
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# Ambiente
+.env
+.env.*
+!.env.example
+
+# Editor/OS
+.vscode/
+.idea/
+.claude/
+.DS_Store
+Thumbs.db

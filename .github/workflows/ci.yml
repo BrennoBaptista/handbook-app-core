@@ -1,0 +1,110 @@
+name: CI
+
+# RA-006, Seção 8 — estágios 1 a 3 (Lint/Format, Testes, Testes
+# Arquiteturais). Build/Scan/Publicação/Deploy não se aplicam a este
+# repositório da mesma forma que a uma aplicação — não há deploy de um
+# núcleo compartilhado, apenas o build de empacotamento (core-frontend) e a
+# validação de que o pacote se importa corretamente.
+#
+# GIT-001, RN-GIT-001 (Proteção da Branch Principal) não é aplicada por este
+# arquivo — é configuração da plataforma remota (GitHub), não de pipeline.
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  core-backend:
+    name: core-backend — lint, testes, cobertura, arquitetura
+    runs-on: ubuntu-latest
+
+    # Infraestrutura real para os testes de integração (TEST-001, Seção 7)
+    # — mesmas credenciais/portas do docker-compose.yml de referência
+    # (PB-006, Passo 6) de qualquer aplicação consumidora.
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: app
+          POSTGRES_PASSWORD: app
+          POSTGRES_DB: app
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U app"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+      valkey:
+        image: valkey/valkey:9
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "valkey-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    defaults:
+      run:
+        working-directory: core-backend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Instalar uv
+        uses: astral-sh/setup-uv@v3
+
+      - name: Instalar dependências (uv sync)
+        run: uv sync
+
+      - name: Lint (Ruff) — OTS-001, Seção 7.9
+        run: uv run ruff check .
+
+      - name: Formatação (Black) — OTS-001, Seção 7.9
+        run: uv run black --check .
+
+      - name: Tipos (MyPy) — OTS-001, Seção 7.9
+        run: uv run mypy src
+
+      - name: Testes arquiteturais — TEST-001, Seção 8
+        run: uv run pytest tests/architecture -v
+
+      - name: Testes + cobertura — TEST-001, Seções 4/12 (piso de 75%)
+        run: uv run pytest --ignore=tests/architecture --ignore=tests/integration --cov=src --cov-report=term-missing
+
+      - name: Testes de integração (Postgres/Valkey reais) — TEST-001, Seção 7
+        run: uv run pytest tests/integration -v
+
+  core-frontend:
+    name: core-frontend — lint, testes, build
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: core-frontend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Instalar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: core-frontend/package-lock.json
+
+      - name: Instalar dependências (npm ci)
+        run: npm ci
+
+      - name: Lint (ESLint) — OTS-001, Seção 7.10
+        run: npm run lint
+
+      - name: Testes (Vitest) — OTS-001, Seção 7.10; ADR-025
+        run: npm test
+
+      - name: Build (empacotamento — o mesmo passo executado pelo "prepare" ao instalar via dependência Git)
+        run: npm run build
