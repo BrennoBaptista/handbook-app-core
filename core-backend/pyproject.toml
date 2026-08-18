@@ -1,6 +1,6 @@
 [project]
 name = "platform-core-backend"
-version = "0.1.0"
+version = "0.1.1"
 description = "Núcleo Compartilhado da Engineering Platform (backend) — bootstrap, autenticação delegada, segurança transversal e observabilidade, consumidos como dependência por qualquer aplicação derivada da plataforma."
 requires-python = ">=3.13"
 dependencies = [
