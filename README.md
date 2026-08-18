@@ -2,7 +2,7 @@
 
 Núcleo Compartilhado da Engineering Platform — implementação de referência dos módulos genéricos (bootstrap, autenticação delegada, segurança transversal, observabilidade) que qualquer aplicação derivada da plataforma consome como dependência, em vez de reescrever a cada novo projeto.
 
-As regras arquiteturais que governam este repositório vivem em `docs/handbook/` (submódulo git do Engineering-Handbook). Ver `CLAUDE.md` para o critério de fronteira entre o que pertence a este repositório e o que pertence a uma aplicação consumidora.
+As regras arquiteturais que governam este repositório vivem no repositório Engineering-Handbook (https://github.com/BrennoBaptista/engineering-handbook) — não referenciado aqui como submódulo git, já que este repositório é ele próprio instalado como dependência Git por outros repositórios, e um submódulo apontando para um repositório privado quebraria essa instalação em ambientes sem credenciais (CI de um app consumidor). Ver `CLAUDE.md` para o critério de fronteira entre o que pertence a este repositório e o que pertence a uma aplicação consumidora.
 
 ---
 
@@ -15,7 +15,7 @@ As regras arquiteturais que governam este repositório vivem em `docs/handbook/`
 
 ## Consumo
 
-Cada pacote é consumido via dependência Git direta (URL do repositório + tag de versão), sem registro de pacotes dedicado — ver o ADR correspondente em `docs/handbook/adr/` para a justificativa dessa escolha.
+Cada pacote é consumido via dependência Git direta (URL do repositório + tag de versão), sem registro de pacotes dedicado — ver ADR-027 no Engineering-Handbook para a justificativa dessa escolha.
 
 ## Versionamento
 
