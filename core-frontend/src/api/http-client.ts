@@ -42,7 +42,15 @@ export function createApiClient(baseUrl: string): {
 
     async function request<T>(path: string, init?: RequestInit): Promise<T> {
       const headers = new Headers(init?.headers);
-      headers.set("Content-Type", "application/json");
+      // `FormData` (upload de arquivo/multipart) nunca deve ganhar um
+      // Content-Type manual — o browser precisa gerar o próprio boundary
+      // (`multipart/form-data; boundary=...`) a partir do body; forçar
+      // "application/json" aqui quebra qualquer upload que passe por este
+      // client (handbook-test-app, specs/furos.md F-030).
+      const isFormData = init?.body instanceof FormData;
+      if (!isFormData) {
+        headers.set("Content-Type", "application/json");
+      }
       if (auth.user?.access_token) {
         headers.set("Authorization", `Bearer ${auth.user.access_token}`);
       }
