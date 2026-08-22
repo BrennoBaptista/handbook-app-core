@@ -42,6 +42,41 @@ describe("createApiClient", () => {
     expect((init.headers as Headers).get("Authorization")).toBeNull();
   });
 
+  it("should set Content-Type: application/json by default", async () => {
+    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(
+      new Response(JSON.stringify({ data: [] }), { status: 200 }),
+    );
+
+    const { useApiClient } = createApiClient("http://api.test");
+    const { result } = renderHook(() => useApiClient());
+
+    await result.current.request("/products");
+
+    const [, init] = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+    expect((init.headers as Headers).get("Content-Type")).toBe(
+      "application/json",
+    );
+  });
+
+  it("should not set a Content-Type header when the body is FormData, so the browser can add its own multipart boundary", async () => {
+    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(
+      new Response(JSON.stringify({ data: {} }), { status: 200 }),
+    );
+
+    const { useApiClient } = createApiClient("http://api.test");
+    const { result } = renderHook(() => useApiClient());
+    const formData = new FormData();
+    formData.append("file", new Blob(["x"]), "x.png");
+
+    await result.current.request("/products/1/image", {
+      method: "POST",
+      body: formData,
+    });
+
+    const [, init] = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+    expect((init.headers as Headers).has("Content-Type")).toBe(false);
+  });
+
   it("should return parsed JSON body on success", async () => {
     (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(
       new Response(JSON.stringify({ data: [{ id: 1 }] }), { status: 200 }),
